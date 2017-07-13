@@ -1,61 +1,49 @@
-import PyPDF2
 import re
 import json
 import requests
 import os
+import asyncio
+from APTnotes_async_download_python35 import download_all_reports
+import subprocess
 
-# from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-# from pdfminer.converter import TextConverter
-# from pdfminer.layout import LAParams
-# from pdfminer.pdfpage import PDFPage
-# from io import StringIO
-#
-# rsrcmgr = PDFResourceManager()
-# retstr = StringIO()
-# codec = 'utf-8'
-# laparams = LAParams()
-# device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
-# fp = open('2011/Alerts DL-2011 Alerts-A-2011-02-18-01 Night Dragon Attachment 1', 'rb')
-# interpreter = PDFPageInterpreter(rsrcmgr, device)
-# password = ""
-# maxpages = 0
-# caching = True
-# pagenos = set()
-#
-# for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching,
-#                               check_extractable=True):
-#     interpreter.process_page(page)
-#
-# text = retstr.getvalue()
-#
-# fp.close()
-# device.close()
-# retstr.close()
+HASHES = {
+    'sha1': re.compile('([0-9a-f]{40})'),
+    'md5': re.compile('([0-9a-f]{32})')
+}
 
-p = re.compile('\b[0-9a-f]{40}\b')
 
-github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
-APTnotes = requests.get(github_url)
-#
-# pdfFile = open('2011/Alerts DL-2011 Alerts-A-2011-02-18-01 Night Dragon Attachment 1', 'rb')
-# pdfReader = PyPDF2.PdfFileReader(pdfFile)
-# print(pdfReader.getPage(0).extractText())
-if APTnotes.status_code == 200:
-    # Load APT report metadata into JSON container
+def convert_pdf_to_txt(path):
+    subprocess.call(['pdftotext', path, 'output'])
+    with open('output','r') as fp:
+        text = fp.readlines()
+    return ''.join(text)
+
+
+def get_iocs(text):
+    iocs = {k: [] for k in HASHES.keys()}
+    try:
+        for hash_name, regex in HASHES.items():
+            result = regex.search(text)
+            if result:
+                for hash in result.groups():
+                    iocs[hash_name] = hash
+    except Exception as e:
+        print(path)
+        print(e)
+    return iocs
+
+
+if __name__ == '__main__':
+    github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
+    APTnotes = requests.get(github_url)
     APT_reports = json.loads(APTnotes.text)
-    # print(APT_reports[i]['Filename'])
-    hashInPdf = {}
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(download_all_reports(loop, APT_reports))
     for i in APT_reports:
-        try:
-            filename = i['Filename']
-            year = i['Year']
-            path = os.path.join(year, filename)
-            # print(path)
-            pdfReader = PyPDF2.PdfFileReader(open(path, 'rb'))
+        filename = i['Filename']
+        year = i['Year']
+        path = os.path.join(year, filename + '.pdf')
+        text = convert_pdf_to_txt(path).lower()
+        print(filename)
+        print(get_iocs(text))
 
-            for pageNumber in range(pdfReader.numPages):
-                val = p.search(pdfReader.getPage(pageNumber).extractText())
-                if val:
-                    print('hash find success' + i, os.path.join(year, filename))
-        except Exception as e:
-            print(e)  # for i in len(hashInPdf):
