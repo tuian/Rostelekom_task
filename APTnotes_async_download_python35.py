@@ -90,6 +90,7 @@ async def download_all_reports(loop, APT_reports):
         download_queue = [loop.create_task(download_report(session, report)) for report in APT_reports]
         await asyncio.wait(download_queue)
 
+sem = asyncio.Semaphore(10)
 
 if __name__ == '__main__':
     # Retrieve APT Note Data
