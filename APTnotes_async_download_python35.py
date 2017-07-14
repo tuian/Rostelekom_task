@@ -43,8 +43,8 @@ async def download_report(session, report):
             shared_name = report_link[report_link.rfind('/') + 1:]
 
             # Get file ID from download button
-            download_button =\
-                soup.find(attrs={'data-resin-target': 'download'})s
+            download_button = \
+                soup.find(attrs={'data-resin-target': 'download'})
             file_id = download_button['data-typed-id']
 
             # Build download URL
