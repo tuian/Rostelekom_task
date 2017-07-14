@@ -35,14 +35,17 @@ def get_iocs(text):
 
 
 if __name__ == '__main__':
-    github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
+    github_url = "https://raw.githubusercontent.com/aptnotes/" \
+                 "data/master/APTnotes.json"
     APTnotes = requests.get(github_url)
     APT_reports = json.loads(APTnotes.text)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(download_all_reports(loop, APT_reports))
     APT_reports = csv.DictReader(open('APTnotes.csv'))
-    fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1', 'Type', 'Hash', 'Date', 'Year']
-    NEW_APT_reports = csv.DictWriter(open('NEW_APTnotes.csv', 'w'), fieldnames=fieldnames)
+    fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1',
+                  'Type', 'Hash', 'Date', 'Year']
+    NEW_APT_reports = csv.DictWriter(open('NEW_APTnotes.csv', 'w'),
+                                     fieldnames=fieldnames)
     NEW_APT_reports.writeheader()
     for row in APT_reports:
         filename = row['Filename']
@@ -55,4 +58,3 @@ if __name__ == '__main__':
             for hash in hashes:
                 buf_row.update({'Type': hash_name, 'Hash': hash})
                 NEW_APT_reports.writerow(buf_row)
-
