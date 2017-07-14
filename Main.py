@@ -15,7 +15,7 @@ HASHES = {
 
 def convert_pdf_to_txt(path):
     subprocess.call(['pdftotext', path, 'output'])
-    with open('output','r') as fp:
+    with open('output', 'r') as fp:
         text = fp.readlines()
     return ''.join(text)
 
