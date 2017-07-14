@@ -12,10 +12,7 @@ from bs4 import BeautifulSoup
 
 
 async def download_report(session, report):
-    report_date = report['Date']
-    report_title = report['Title']
     report_year = report['Year']
-    report_source = report['Source']
     report_link = report['Link']
     report_filename = report['Filename']
     report_sha1 = report['SHA-1']
