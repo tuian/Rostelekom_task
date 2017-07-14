@@ -43,7 +43,8 @@ async def download_report(session, report):
             shared_name = report_link[report_link.rfind('/') + 1:]
 
             # Get file ID from download button
-            download_button = soup.find(attrs={'data-resin-target':'download'})
+            download_button =\
+                soup.find(attrs={'data-resin-target': 'download'})s
             file_id = download_button['data-typed-id']
 
             # Build download URL
@@ -84,14 +85,16 @@ async def download_report(session, report):
 
 async def download_all_reports(loop, APT_reports):
     with aiohttp.ClientSession(loop=loop) as session:
-        download_queue = [loop.create_task(download_report(session, report)) for report in APT_reports]
+        download_queue = [loop.create_task(download_report(session, report))
+                          for report in APT_reports]
         await asyncio.wait(download_queue)
 
 sem = asyncio.Semaphore(10)
 
 if __name__ == '__main__':
     # Retrieve APT Note Data
-    github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
+    github_url = "https://raw.githubusesrcontent.com/" \
+                 "aptnotes/data/master/APTnotes.json"
     APTnotes = requests.get(github_url)
 
     if APTnotes.status_code == 200:
