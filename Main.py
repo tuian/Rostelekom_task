@@ -3,61 +3,56 @@ import csv
 import os
 import re
 import subprocess
-
+import requests
+import json
 from APTnotes_async_download_python35 import download_all_reports
 
 HASHES = {
-    'sha1': re.compile('([0-9a-f]{40})'),
-    'md5': re.compile('([0-9a-f]{32})')
+    'sha1': re.compile(r'(\b[0-9a-f]{40}\b)'),
+    'md5': re.compile(r'(\b[0-9a-f]{32}\b)')
 }
 
 
 def convert_pdf_to_txt(path):
     subprocess.call(['pdftotext', path, 'output'])
-    file = open('output', 'r')
-    text = file.readlines()
+    with open('output','r') as fp:
+        text = fp.readlines()
     return ''.join(text)
+
 
 def get_iocs(text):
     iocs = {k: [] for k in HASHES.keys()}
     try:
         for hash_name, regex in HASHES.items():
-            result = regex.search(text)
+            result = regex.finditer(text)
             if result:
                 iocs[hash_name] = []
-                for hash in result.groups():
-                    iocs[hash_name].append(hash)
+                for match in result:
+                    iocs[hash_name].append(match.group())
     except Exception as e:
-        print(path)
         print(e)
     return iocs
 
 
 if __name__ == '__main__':
-    # github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
-    # APTnotes = requests.get(github_url)
-    # APT_reports = json.loads(APTnotes.text)
-    APT_reports = csv.DictReader(open('APTnotes.csv'))
-    fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1', 'MD5', 'SHA1', 'Date', 'Year']
-    NEW_APT_reports = csv.DictWriter(open('NEW_APTnotes.csv', 'w'), fieldnames=fieldnames)
-    NEW_APT_reports.writeheader()
+    github_url = "https://raw.githubusercontent.com/aptnotes/data/master/APTnotes.json"
+    APTnotes = requests.get(github_url)
+    APT_reports = json.loads(APTnotes.text)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(download_all_reports(loop, APT_reports))
-    for i in APT_reports:
-        filename = i['Filename']
-        year = i['Year']
+    APT_reports = csv.DictReader(open('APTnotes.csv'))
+    fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1', 'Type', 'Hash', 'Date', 'Year']
+    NEW_APT_reports = csv.DictWriter(open('NEW_APTnotes.csv', 'w'), fieldnames=fieldnames)
+    NEW_APT_reports.writeheader()
+    for row in APT_reports:
+        filename = row['Filename']
+        year = row['Year']
         path = os.path.join(year, filename)
-        text = convert_pdf_to_txt(path).lower()
-        array = get_iocs(text)
-        if len(array['sha1']) == 0 or len(array['md5']) == 0:
-            for j in array['sha1']:
-                NEW_APT_reports.writerow({'Filename': i['Filename'], 'Title': i['Title'], 'Source': i['Source'],
-                                          'Link': i['Link'], 'SHA-1': i['SHA-1'], 'SHA1': j,
-                                          'Date': i['Date'], 'Year': i['Year']})
-            for j in array['md5']:
-                NEW_APT_reports.writerow({'Filename': i['Filename'], 'Title': i['Title'], 'Source': i['Source'],
-                                          'Link': i['Link'], 'SHA-1': i['SHA-1'], 'MD5': j,
-                                          'Date': i['Date'], 'Year': i['Year']})
-        else:
-            NEW_APT_reports.writerow({'Filename': i['Filename'], 'Title': i['Title'], 'Source': i['Source'],
-                                      'Link': i['Link'], 'SHA-1': i['SHA-1'], 'Date': i['Date'], 'Year': i['Year']})
+        text = convert_pdf_to_txt(path + '.pdf').lower()
+        iocs = get_iocs(text)
+        buf_row = {k: v for k, v in row.items()}
+        for hash_name, hashes in iocs.items():
+            for hash in hashes:
+                buf_row.update({'Type': hash_name, 'Hash': hash})
+                NEW_APT_reports.writerow(buf_row)
+
