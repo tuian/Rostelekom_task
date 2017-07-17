@@ -4,4 +4,4 @@ get_server = Flask(__name__)
 
 @get_server.route('/')
 def send_file():
-	return send_from_directory(directory='uploads', filename='NEW_APTnotes.csv', as_attachment=True)
+	return send_from_directory(directory='uploads', filename='APTnotes_updated.csv', as_attachment=True)
