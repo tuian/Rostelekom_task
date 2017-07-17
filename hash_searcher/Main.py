@@ -12,6 +12,8 @@ HASHES = {
     'md5': re.compile(r'(\b[0-9a-f]{32}\b)')
 }
 
+download_path = "download_pdfs"
+
 
 def convert_pdf_to_txt(path):
     subprocess.call(['pdftotext', path, 'output'])
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     APTnotes = requests.get(github_url)
     APT_reports = json.loads(APTnotes.text)
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(download_all_reports(loop, APT_reports))
+    loop.run_until_complete(download_all_reports(loop, APT_reports, download_path))
     APT_reports = csv.DictReader(open('APTnotes.csv'))
     fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1',
                   'Type', 'Hash', 'Date', 'Year']
@@ -50,7 +52,7 @@ if __name__ == '__main__':
     for row in APT_reports:
         filename = row['Filename']
         year = row['Year']
-        path = os.path.join(year, filename)
+        path = os.path.join(download_path ,year, filename)
         text = convert_pdf_to_txt(path + '.pdf').lower()
         iocs = get_iocs(text)
         buf_row = {k: v for k, v in row.items()}
