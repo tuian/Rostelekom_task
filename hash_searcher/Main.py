@@ -13,7 +13,7 @@ HASHES = {
 }
 
 download_path = "download_pdfs"
-
+csv_output_file_path = "/APTnotes_updated.csv"
 
 def convert_pdf_to_txt(path):
     subprocess.call(['pdftotext', path, 'output'])
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     APT_reports = csv.DictReader(open('APTnotes.csv'))
     fieldnames = ['Filename', 'Title', 'Source', 'Link', 'SHA-1',
                   'Type', 'Hash', 'Date', 'Year']
-    NEW_APT_reports = csv.DictWriter(open('../get_server/app/uploads/NEW_APTnotes.csv', 'w'),
+    NEW_APT_reports = csv.DictWriter(open(csv_output_file_path, 'w'),
                                      fieldnames=fieldnames)
     NEW_APT_reports.writeheader()
     for row in APT_reports:
