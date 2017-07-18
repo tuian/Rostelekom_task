@@ -11,20 +11,21 @@ import magic
 from bs4 import BeautifulSoup
 
 
-async def download_report(session, report):
+async def download_report(session, report, path):
     report_year = report['Year']
     report_link = report['Link']
     report_filename = report['Filename']
     report_sha1 = report['SHA-1']
 
     # Ensure directory exists
-    os.makedirs(report_year, exist_ok=True)
+    dirpath = os.path.join(path ,report_year)
+    os.makedirs(dirpath, exist_ok=True)
 
     # Set hash check
     hash_check = hashlib.sha1()
 
     # Set download path
-    download_path = os.path.join(report_year, report_filename)
+    download_path = os.path.join(dirpath, report_filename)
 
     # File with PDF extension path
     pdf_extension_path = download_path + ".pdf"
@@ -83,9 +84,9 @@ async def download_report(session, report):
             print(message, unexpected_error)
 
 
-async def download_all_reports(loop, APT_reports):
+async def download_all_reports(loop, APT_reports, path):
     with aiohttp.ClientSession(loop=loop) as session:
-        download_queue = [loop.create_task(download_report(session, report))
+        download_queue = [loop.create_task(download_report(session, report, path))
                           for report in APT_reports]
         await asyncio.wait(download_queue)
 
