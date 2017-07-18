@@ -10,6 +10,9 @@ ADD . /app
 #install depends
 RUN pip install --no-cache-dir -r requirements.txt
 
+#bug lib
+RUN CFLAGS="-O0" pip install lxml==3.6.4
+
 RUN apt-get update -y
 
 RUN apt-get install -y poppler-utils
